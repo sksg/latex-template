@@ -1,0 +1,70 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-collect}%
+    [2021/01/13 Course notes collect package]
+    
+\RequirePackage{xparse}
+
+
+\NewDocumentCommand{\NewCollection}{m}{%
+    \expandafter\newif\csname if@#1@collect@\endcsname%
+    \expandafter\newif\csname if@#1@print@immediate@\endcsname%
+    \expandafter\newif\csname if@#1@open@\endcsname%
+    \global\csname @#1@collect@false\endcsname%
+    \global\csname @#1@print@immediate@true\endcsname%
+    \global\csname @#1@open@false\endcsname%
+    \expandafter\newwrite\csname #1@out\endcsname%
+}
+\NewDocumentCommand{\IfPrintImmediateTF}{m+m+m}{%
+    \csname if@#1@print@immediate@\endcsname #2\else #3\fi%
+}
+\NewDocumentCommand{\IfCollectingT}{m+m}{%
+    \csname if@#1@collect@\endcsname #2\fi%
+}
+\NewDocumentCommand{\IfCollectingTF}{m+m+m}{%
+    \csname if@#1@collect@\endcsname #2\else #3\fi%
+}
+\NewDocumentCommand{\StartCollecting}{m}{%
+    \global\csname @#1@collect@true\endcsname%
+    \global\csname @#1@print@immediate@false\endcsname%
+}
+\NewDocumentCommand{\StopCollecting}{m}{%
+    \global\csname @#1@collect@false\endcsname%
+    \global\csname @#1@print@immediate@true\endcsname%
+}
+\NewDocumentCommand{\PrintOnCollect}{m}{%
+    \global\csname @#1@print@immediate@true\endcsname%
+}
+\NewDocumentCommand{\ManualPrintCollection}{m}{%
+    \global\csname @#1@print@immediate@false\endcsname%
+}
+\NewDocumentCommand{\OpenCollect}{m}{%
+	\csname if@#1@open@\endcsname\else%
+		\expandafter\immediate\expandafter\openout%
+		    \csname #1@out\endcsname=\jobname.#1%
+		\global\csname @#1@open@true\endcsname%
+	\fi%
+}
+\NewDocumentCommand{\CloseCollect}{m}{%
+	\csname if@#1@open@\endcsname%
+		\expandafter\immediate\expandafter\closeout%
+		    \csname #1@out\endcsname%
+		\global\csname @#1@open@false\endcsname%
+	\fi%
+}
+\NewDocumentCommand{\AddToCollection}{m+m}{%
+    \IfCollectingT{#1}{
+        \OpenCollect{#1}%
+        \expandafter\immediate\expandafter\write%
+            \csname #1@out\endcsname{#2}%
+    }
+}
+\NewDocumentCommand{\PrintCollection}{m}{%
+    \IfCollectingTF{#1}{%
+        \IfPrintImmediateTF{#1}{}{%
+            \CloseCollect{#1}%
+            \StopCollecting{#1}%
+            \@input{\jobname.#1}%
+            \StartCollecting{#1}%
+        }%
+    }{}%
+}

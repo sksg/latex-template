@@ -1,0 +1,115 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-framebox}%
+    [2021/01/13 Course notes framebox package]
+    
+\RequirePackage{tikz,xparse}
+
+% Settings available to change in document
+\def\frameboxtitlefont{\normalfont}
+\newlength{\frameboxmargin}
+\setlength{\frameboxmargin}{5mm}
+\newlength{\frameboxborder}
+\setlength{\frameboxborder}{0.4pt}
+\newlength{\frameboxtitlemargin}
+\setlength{\frameboxtitlemargin}{2mm}
+
+\NewDocumentCommand{\NewFramebox}{mO{}m}{%
+    \NewFrameboxCounter{#1}%
+    \NewDocumentEnvironment{#1#2}{o+b}{%
+        \def\thecnt{\csname the#1\endcsname}%
+        \def\theicon{\csname #1icon\endcsname}%
+        \par\addvspace{2ex}%
+        \saveparlengths%
+        \noindent%
+        \hspace*{-\frameboxmargin}%
+        \hspace*{-0.5\frameboxborder}%
+        \RefStepFrameboxCounter{#1}[##1]
+        \label{:#1:\thecnt}%
+        \tikz[baseline={(t.west)},
+              line width=\frameboxborder,
+              inner xsep=\frameboxtitlemargin]{
+            \node[anchor=west]
+                (t) at (\frameboxmargin, 0) {%
+                \frameboxtitlefont%
+                \theicon~~#3~\thecnt%
+            };
+            \node[anchor=north west, inner sep=\frameboxmargin] (c) {%
+                \begin{minipage}{\columnwidth}%
+                \capturefootnotes%
+                \restoreparlengths%
+                \noindent ##2%
+                \end{minipage}%
+            };
+            \draw (t.east) -- (c.north east) -- (c.south east) -- (c.south west) -- (c.north west) -- (t.west);
+        }%
+        \vspace{1ex}%
+        \releasefootnotes%
+        \hspace*{-\frameboxmargin}%
+        \hspace*{-0.5\frameboxborder}%
+        \hspace*{-1mm}% To remove overfull hboxes
+        \par\addvspace{3ex}%
+    }{}%
+}
+\NewDocumentCommand{\NewFrameboxCounter}{m}{%
+    \newcounter{#1}[section]%
+    \expandafter\RenewExpandableDocumentCommand%
+        \csname the#1\endcsname{}%
+        {\thesection.\arabic{#1}}%
+    % Hidden counter for number-less refs
+    \newcounter{#1@hidden}[section]%
+}%
+\NewDocumentCommand{\RefStepFrameboxCounter}{mo}{%
+    \IfValueT{#2}{%
+        % Set the counters to a fixed value
+        \expandafter\RenewExpandableDocumentCommand%
+            \csname the#1\endcsname{}{#2}%
+        \expandafter\RenewExpandableDocumentCommand%
+            \csname the#1@hidden\endcsname{}{#2}%
+    }%
+    \IfValueTF{#2}{%
+        % Fixed value
+        \refstepcounter{#1@hidden}%
+    }{%
+        % Normal (counter) value
+        \refstepcounter{#1}%
+    }%
+}%
+\NewDocumentCommand{\StepFrameboxCounter}{mo}{%
+    \IfValueTF{#2}{%
+        \stepcounter{#1@hidden}%
+    }{%
+        \stepcounter{#1}%
+    }%
+}%
+% Helper command to allow normal footnotes inside minipage
+\newcounter{CN@capturedfootnotes}%
+\NewDocumentCommand{\capturefootnotes}{}{%
+    \global\let\CN@outerfootnote\footnote%
+    \setcounter{CN@capturedfootnotes}{0}%
+    \gdef\releasefootnotes{%
+        \global\let\releasefootnotes\relax%
+        \global\let\footnote\CN@outerfootnote%
+        \global\let\CN@outerfootnote\relax%
+        \addtocounter{footnote}{-\value{CN@capturedfootnotes}}%
+    }%
+    \RenewDocumentCommand{\footnote}{m}{%
+        \footnotemark%
+        \addtocounter{CN@capturedfootnotes}{1}%
+        \g@addto@macro\releasefootnotes{%
+            \addtocounter{footnote}{1}%
+            \footnotetext{##1}%
+        }%
+    }%
+}
+% Helper command to unchange parlengths inside minipage
+\newlength{\CN@currentparskip}%
+\newlength{\CN@currentparindent}%
+\NewDocumentCommand{\saveparlengths}{}{%
+    \setlength{\CN@currentparskip}{\parskip}%
+    \setlength{\CN@currentparindent}{\parindent}%
+    \def\restoreparlengths{%
+        \setlength{\parskip}{\CN@currentparskip}%
+        \setlength{\parindent}{\CN@currentparindent}%
+        \let\restoreparlengths\relax%
+    }%
+}

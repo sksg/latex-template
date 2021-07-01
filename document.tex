@@ -1,0 +1,289 @@
+\documentclass[oneandhalfcolumn]{coursenotes-handout}
+
+\title{Computer Vision Course Notes}
+\author{Søren K. S. Gregersen}
+\mailto{sorgre@dtu.dk}
+\affiliation{DTU Compute}
+
+\addbibresource{references.bib}
+
+
+\begin{document}
+
+\maketitle
+
+\section{Homogeneous coordinates}
+Deriving the mathematics behind computer vision and computational imaging often leads to heavy and complicated expressions. Any simplifications of those expressions are appreciated a lot down the line. The homogeneous coordinate system is such a trick. Transformations of 3D objects, such as rotations, translations, and perspective transforms, are expressed much easier with homogeneous coordinates.%
+\remark{\includestandalone[mode=buildnew, width=0.5\linewidth]{observer-transformations}Consider two observers of, for example, the \emph{Stanford Bunny}\cite{turk1994}. To mathematically describe the transformations between observers---rotation, translation, and projection---requires multiple non-linear operations. In homogeneous coordinates, however, these operations can be expressed as a single (linear) matrix-vector operation.}%
+
+The homogeneous coordinate system extends the standard (inhomogeneous) Cartesian coordinates by an extra \emph{scale dimension} \(w\). Two examples are
+\begin{align}
+  \vect{q} = \begin{bmatrix} w x \\ w y \\ w \end{bmatrix} \AND
+  \vect{Q} = \begin{bmatrix} w x \\ w y \\ w z \\ w \end{bmatrix}
+\end{align}
+describing a two-dimensional (2D) and three dimensional (3D) point, respectively. An \(N\)-dimensional vector in the Cartesian coordinate system effectively becomes an \((N+1)\)-dimensional vector in homogeneous coordinates.
+
+We define the homogeneous transformation (\( \HOM \)) of a point from inhomogeneous coordinates \(\vect{v}\) to homogeneous coordinates \(\vect{q}\)
+\begin{align}
+    \HOM(\vect{v}) = \begin{bmatrix} w \vect{v} \\ w \end{bmatrix} = \vect{q} \,, \WHERE w \neq 0. \label{eq:hom.def}
+\end{align}
+Notice that we have used a block notation of the vector \(\vect{q}\) e.g. say that \(\vect{v} = \begin{bmatrix} x & y \end{bmatrix}^{\TR}\) then \(\vect{q} = \begin{bmatrix} w x & w y & w \end{bmatrix}^{\TR}\). This notation will be used a lot in these notes.
+
+The inhomogeneous \(\vect{v}\) and the homogeneous \(\vect{q}\) describe exactly the same point in space i.e. \emph{they are equivalent}. This is regardless of the scaling dimension size, like in case of \(w = 1\) or \(w = 3.14\). The points are still equivalent as long as we maintain \(w \neq 0\). For convenience, the scale \(w = 1\) is often chosen in the above \( \HOM \) transformation.\remark{\emph{What does it mean to scale homogeneous coordinates by \(w\)?} Well, just think of homogeneous coordinates as a mathematical trick. It just makes point set (rigid) transformations easier to express.}
+
+\begin{example}\label{exp:homogeneous-coords}%
+  Consider the 2D point
+  \begin{align}
+      \vect{v} = \begin{bmatrix} 3 \\ 4 \end{bmatrix} \,.
+  \end{align}
+  Any of the three following homogeneous points are equivalent to \(\vect{v}\)
+  \begin{align}
+      \vect{q}_1 = \begin{bmatrix} 1 * 3 \\ 1 * 4 \\ 1 \end{bmatrix} \,, \quad
+      \vect{q}_2 = \begin{bmatrix} 2 * 3 \\ 2 * 4 \\ 2 \end{bmatrix} \,, \AND
+      \vect{q}_3 = \begin{bmatrix} \pi/6 * 3 \\ \pi/6 * 4 \\ \pi/6 \end{bmatrix}
+  \end{align}
+
+  The homogeneous coordinates are just scaled with respect to each other. You could also say that \emph{equivalent homogeneous vectors are, in fact, parallel vectors}.
+\end{example}
+
+To get back to Cartesian coordinates we have the (reverse) inhomogeneous transformation (\( \INHOM \)). By reversing \cref{eq:hom.def} the \( \INHOM \) transform is defined as
+\begin{align}
+  \INHOM (\vect{q}) = \vect{v} / w \,, \WHERE w \neq 0. \label{eq:inhom.def}
+\end{align}
+Here it is obvious to see why we cannot have \(w = 0\) since we would otherwise divide by \(0\). Since no point in real space can ever be represented with \(w = 0\), then such points are not in real space. We can, however, consider points at infinity. Here homogeneous coordinates allow \(w = 0\). Such points are very useful for representing points very far away, like the sun or the stars.\remark{In the next \cref{sec:homogeneous-coords-lines-planes} we will consider lines in 2D or planes in 3D, where \(w = 0\) is also allowed.}
+
+\begin{exercise}\label{exc:homogeneous-coords}
+  Which of the following homogeneous coordinates are equivalent:
+  \begin{align}
+      \vect{q}_1 = \begin{bmatrix} 1    \\  2   \\  2.5  \\  1 \end{bmatrix} \,, \;
+      \vect{q}_2 = \begin{bmatrix} 3.4  \\  6.8 \\  8.4  \\  3.4 \end{bmatrix} \,, \;
+      \vect{q}_3 = \begin{bmatrix} 5.1  \\ 10.2 \\ 12.75 \\  5.1 \end{bmatrix} \,, \AND
+      \vect{q}_4 = \begin{bmatrix} 7    \\ 14.4 \\ 18.   \\  7.2 \end{bmatrix} \,?
+  \end{align}
+  What are the inhomogeneous coordinates?
+
+  \begin{scorecard}[Scores:][How did you solve this exercise?]
+    \item Using pen and paper \( \rightarrow \) old school student,
+    \item mathematical software \( \rightarrow \) modern millennial, or
+    \item thinking really hard \( \rightarrow \) natural born mathematician.
+  \end{scorecard}
+
+\solution
+  The inhomogeneous coordinates \(\vect{v}_i = \INHOM(\vect{q}_i)\) are:
+  \begin{align}
+      \vect{v}_1 = \begin{bmatrix} 1    \\  2   \\  2.5  \end{bmatrix} \,, \;
+      \vect{v}_2 = \begin{bmatrix} 1    \\  2   \\  2.47 \end{bmatrix} \,, \;
+      \vect{v}_3 = \begin{bmatrix} 1    \\  2   \\  2.5  \end{bmatrix} \,, \AND
+      \vect{v}_4 = \begin{bmatrix} 0.97 \\  2   \\  2.5  \end{bmatrix} \,.
+  \end{align}
+  Evidently only \(\vect{v}_1 = \vect{v}_3\) such that \(\vect{q}_1\) and \(\vect{q}_3\) are equivalent.
+
+\end{exercise}
+
+\subsection{Representing 2D lines and 3D planes}\label{sec:homogeneous-coords-lines-planes}
+
+Homogeneous coordinates can also be used to represent lines and planes. Consider the 2D line given by the line equation
+\begin{align}
+0 = a x + b y + c \,,
+\end{align}
+where \(a\), \(b\), and \(c\) represent the line, and \(x\) and \(y\) are the coordinates of points on the line. By rearrangement, the line equation can be represented in vector form
+\begin{align}
+0 = \begin{bmatrix}a & b & c\end{bmatrix} \begin{bmatrix}x \\ y \\ 1\end{bmatrix} \label{eq:line.eq}
+  = \vect{l}^{\TR} \vect{q}
+\end{align}
+where \(\vect{l}^{\TR} = [\begin{matrix}a & b & c\end{matrix}]\) and \(\vect{q}\) represent the line and the point in homogeneous coordinates. Along the same lines---no pun intended---we can represent 3D planes from the plane equation
+\begin{align}
+0 = a x + b y + c z + d
+  = \begin{bmatrix}a & b & c & d\end{bmatrix} \begin{bmatrix}x \\ y \\ z \\ 1\end{bmatrix} \label{eq:plane.eq}
+  = \vect{P}^{\TR} \vect{Q} \,,
+\end{align}
+where \(\vect{P}^{\TR} = [\begin{matrix}a & b & c & d\end{matrix}]\)  and \(\vect{Q}\) represent the plane and the 3D point in homogeneous coordinates. Notice that the above equations are unchanged by scaling with \(w\) i.e.\ \(\vect{Q} \to w\vect{Q}\) or \(\vect{P} \to w\vect{P}\). The same hold for the case of a line. Setting \(w = 0\) would, of course, only return the trivial and uninteresting case of \(0 = 0\). In addition, notice that the homogeneous representation of a plane allows the last coordinate \(d = 0\), or in case of the line \(c = 0\).
+
+An alternative form for a line is \(\vect{l} = \begin{bmatrix} \vect{n}^{\TR} & \alpha \end{bmatrix}^{\TR}\) and for a plane is \(\vect{P} = \begin{bmatrix} \vect{N}^{\TR} & \beta \end{bmatrix}^{\TR}\). Notice in particular that the vectors \(\vect{n}\) and \(\vect{N}\) are perpendicular to the line \(\vect{l}\) and plane \(\vect{P}\), respectively. It can also be shown that the constants \(\alpha\) and \(\beta\) are the shortest distances between the origin and the line \(\vect{l}\) and plane \(\vect{P}\), respectively. The proofs are straightforward and left for the reader as an exercise.
+
+\begin{exercise}
+  Given the line \(\vect{l}\) and plane \(\vect{P}\) given by
+  \begin{align}
+      \vect{l} =  \begin{bmatrix} \vect{n} \\ \alpha \end{bmatrix} \AND
+      \vect{P} =  \begin{bmatrix} \vect{N} \\ \beta \end{bmatrix},
+  \end{align}
+  show that the vectors \(\vect{n}\) and \(\vect{N}\) are perpendicular to the line \(\vect{l}\) and plane \(\vect{P}\), respectively. Furthermore, show that the constants \(\alpha\) and \(\beta\) are the shortest distances between the origin and the line \(\vect{l}\) and plane \(\vect{P}\), respectively.
+\end{exercise}
+
+A set of homogeneous coordinates can thus represent both a point in space and a line in space. This is known as the \emph{duality} of the homogeneous coordinate system. A point is the dual of a line and vice versa. There are some very interesting implications of this, which are examined in more detail in \cite{hartley2003}.
+
+It is worth pointing out that the homogeneous 2D line representation makes line intersections easy to derive. Given two 2D lines \(\vect{l}_1\) and \(\vect{l}_2\) we have the relations
+\begin{align}
+0 = \vect{l}_1^{\TR} \vect{q} \AND
+0 = \vect{l}_2^{\TR} \vect{q} \label{eq:hom.lineintersect} \,,
+\end{align}
+where \(\vect{q}\) is the intersection point. A solution forms as the cross-product
+\begin{align}
+\vect{q} = \vect{l}_1 \times \vect{l}_2 \,,
+\end{align}
+by assuming \(\vect{l}_1\), \(\vect{l}_2\), and \(\vect{q}\) are just ordinary vectors of three dimensions (3-vectors). This solution is easily validated by inserting into \cref{eq:hom.lineintersect}.
+
+As it also turns out, using the homogeneous representation makes point-to-line or point-to-plane distance calculations super easy. We define these distances as the shortest distances between the points and the lines or plane, respectively. Then given the line \(\vect{l}\) and the point \(\vect{q}_i\) you find the distance \(d\) between them
+\begin{align}
+d = \frac{\vect{l}^{\TR} \vect{q}_i}{||\vect{n}||w} \,. \label{eq:hom.dist2line}
+\end{align}
+The line \(\vect{l} = [\vect{n}^{\TR} \; \alpha]^{\TR}\), the 2D point \(\vect{q} = [w \vect{v}^{\TR} \; w]^{\TR}\), and the 2D vector \(\vect{n}\) is perpendicular to the line \(\vect{l}\). The point-to-plane distance \(D\) is given similarly by
+\begin{align}
+D = \frac{\vect{P}^{\TR} \vect{Q}_i}{||\vect{N}||w} \,, \label{eq:hom.dist2plane}
+\end{align}
+where the plane \(\vect{P} = [\vect{N}^{\TR} \; \beta]^{\TR}\), the 3D point \(\vect{Q} = [w \vect{V}^{\TR} \; w]^{\TR}\), and the 3D vector \(\vect{N}\) is perpendicular to the plane \(\vect{P}\). The proofs of these distance formulas are left as exercise~\ref{exc:homog.dist.formulas} for the reader. In the special cases of \(w = ||\vect{n}|| = 1\) or \(w = ||\vect{N}|| = 1\) in case of, respectively, line or plane distances, these relations simplify to
+\begin{align}
+d = \vect{l}^{\TR} \vect{q}_i \OR D = \vect{P}^{\TR} \vect{Q}_i \,.
+\end{align}
+
+\begin{exercise}\label{exc:homog.dist.formulas}
+  Prove the distance formulas. Given a 2D line \(\vect{l} = [\vect{n}^{\TR} \; \alpha]^{\TR}\) and a 3D plane \(\vect{P} = [\vect{N}^{\TR} \; \beta]^{\TR}\), prove \cref{eq:hom.dist2line,eq:hom.dist2plane} using as few hints from below as possible. The average student may need all hints.
+
+  \begin{scorecard}[Exercise hints:]
+    \item \textbf{Hint 1}: The attentive reader will have noticed from the previous exercise that the vectors \(\vect{n}\) and \(\vect{N}\) are perpendicular to the line and plane, respectively.
+    \item \textbf{Hint 2}: The shortest paths are, in fact, perpendicular to line or plane. In other words, the distance is a projection onto the vectors \(\vect{n}\) and \(\vect{N}\).
+    \item \textbf{Hint 3}: The \cref{eq:line.eq,eq:plane.eq} can be used to show that \(\alpha\) and \(\beta\) are the \emph{negative} distances between origin \(\vect{0}\) and the line or plane, respectively.
+    \item \textbf{Hint 4}: The shortest distance can be shown to be the projections of the point vectors onto the normal vectors minus the distances from origin \(\vect{0}\) to the line or plane.
+  \end{scorecard}
+\solution
+  From the line and plane \cref{eq:line.eq,eq:plane.eq} we know that \(\vect{n}\) and \(\vect{N}\) are perpendicular to the line and plane, respectively. Given the 2D point \(\vect{v}\) and the 3D point \(\vect{V}\) in Cartesian coordinates, the shortest distances are projections onto \(\vect{n}\) and \(\vect{N}\) i.e.
+  \begin{align}
+    d = \frac{\vect{n} * (\vect{v} - \vect{v}_l)}{||\vect{n}||} \AND
+    D = \frac{\vect{N} * (\vect{V} - \vect{V}_P)}{||\vect{n}||} \,,
+  \end{align}
+  where \(\vect{v}_l \in \{\vect{l}\}\) and \(\vect{V}_P \in \{\vect{P}\}\) are points on the line or plane, respectively. Inserting the points \(\vect{v}_l\) and \(\vect{V}_P\) into \cref{eq:line.eq,eq:plane.eq}, respectively, we find that
+  \begin{align}
+    \vect{n} * \vect{v}_l = - \alpha \AND
+    \vect{N} * \vect{V}_P = - \beta \,.
+  \end{align}
+  The distances are then simplified into
+  \begin{align}
+    d = \frac{\vect{n} * \vect{v} + \alpha}{||\vect{n}||} \AND
+    D = \frac{\vect{N} * \vect{V} + \beta}{||\vect{n}||} \,,
+  \end{align}
+  In the usual fashion of homogeneous representations, we rearrange these formulas into
+  \begin{align}
+    d = \frac{\begin{bmatrix}\vect{n}^{\TR} & \alpha\end{bmatrix} * \begin{bmatrix}\vect{v} \\ 1\end{bmatrix}}{||\vect{n}||} = \frac{\vect{l}^{\TR} * \vect{q}}{||\vect{n}||w} \AND
+    D = \frac{\begin{bmatrix}\vect{N}^{\TR} & \beta\end{bmatrix} * \begin{bmatrix}\vect{V} \\ 1\end{bmatrix}}{||\vect{n}||} = \frac{\vect{P}^{\TR} * \vect{Q}}{||\vect{n}||w} \,,
+  \end{align}
+  where \(\vect{q}^{\TR} = w [\vect{v}^{\TR} \; 1]\) and \(\vect{Q}^{\TR} = w [\vect{v}^{\TR} \; 1]\).
+\end{exercise}
+
+\subsection{Vector displacements versus points}\label{sec:homogeneous-coords-vector-displacements}
+
+While the homogeneous coordinates are smart and easy to use, they do require a change of mindset. Adding and subtracting coordinates does not work like we necessarily expect. Compare these two cases of adding two points using, respectively, Cartesian and homogeneous coordinates:
+\begin{align}
+\vect{v}_3 = \vect{v}_1 + \vect{v}_2 \AND \vect{q}_3 = \vect{q}_1 + \vect{q}_2 \,.
+\end{align}
+If we insert the \(\HOM\) transformations
+\begin{align}
+\vect{q}_1 = \begin{bmatrix}\vect{v}_1 \\ w_1 \end{bmatrix} \AND \vect{q}_2 = \begin{bmatrix}\vect{v}_2 \\ w_2 \end{bmatrix} \,,
+\end{align}
+then adding them yields
+\begin{align}
+\vect{q}_3 = \begin{bmatrix}\vect{v}_1 \\ w_1 \end{bmatrix} + \begin{bmatrix}\vect{v}_2 \\ w_2 \end{bmatrix} = \begin{bmatrix}\vect{v}_3 \\ w_1 + w_2 \end{bmatrix} \,.
+\end{align}
+Notice that now \(\INHOM(\vect{q}_3) = \vect{v}_3 / (w_1 + w_2) \neq \vect{v}_3 \forall w_1, w_2 \in \mathbb{R} \).\remark{If you are unfamiliar with the \emph{forall} symbol \(\forall\) then, for example, \(A \forall B\) means that \(A\) is true for all elements of \(B\). In this case \(\vect{v}_3 / (w_1 + w_2) \neq \vect{v}_3 \forall w_1, w_2 \in \mathbb{R}\) means that \(\vect{v}_3 / (w_1 + w_2)\) is not equal to \(\vect{v}_3\) for all cases of \(w_1 \in \mathbb{R}\) and \(w_2 \in \mathbb{R}\). In fact, they are only equal in the case that \(w_1 + w_2 = 1\)} In other words, adding two homogeneous points \emph{is not equivalent to} adding the same inhomogeneous points. This seemingly breaks consistency between homogeneous and inhomogeneous coordinates. To fix this we introduce displacements (\(\vect{\delta}\)), which are different from points (\(\vect{v}\)).
+
+A point \(\vect{v}\) and can be displaced by adding or subtracting any number of displacements, like so:
+\begin{align}
+\vect{v}_2 = \vect{v}_1 + \vect{\delta}_1 + \vect{\delta}_2 + \dots \,.
+\end{align}
+A displacement can also be a superposition of other displacements, like so
+\begin{align}
+\vect{\delta}_n = \vect{\delta}_1 + \vect{\delta}_2 + \vect{\delta}_3 + \dots \,.
+\end{align}
+This makes sense in the real world too. Adding two points together has no physical meaning; but displacing points does have meaning. Moreover, points cannot suddenly become displacements and vice versa.
+
+The (in)homogeneous transformations of displacements is different from points [compare to \cref{eq:hom.def,eq:inhom.def}]. The homogeneous transform of displacements is defined
+\begin{align}
+    \HOM(\vect{\delta}) = \begin{bmatrix} \vect{\delta} \\ 0 \end{bmatrix} = \vect{\xi} \,,
+\end{align}
+where the homogeneous scale is zero. Likewise the inhomogeneous transform of displacements is defined
+\begin{align}
+    \INHOM (\vect{\xi}) = \INHOM \begin{bmatrix} \vect{\delta} \\ 0 \end{bmatrix} = \vect{\delta}
+\end{align}
+
+This is, in fact, a powerful tool we suddenly have at our disposal. In traditional Cartesian representation, there is no such distinction between points and displacements---they are all just vectors of the same length. In homogeneous coordinates, however, they are easy to distinguish; points have \(w \neq 0\) and displacements have \(w = 0\). You just have to look at the last dimension and you know exactly whether it is a point or a displacement.\remark{You can also think of displacements as being points infinitely far away---because the Cartesian point vector gets divided by zero. In effect, displacement vectors are too far from the origin \(\vect{0}\) to be represented as real points. These vectors are very useful in computer science. For example, in graphics for representing unidirectional lights or surface normals because they are not relative to an origin.}
+
+\begin{example}
+    Consider the displacement \(\vect{\Delta}\) of a 3D point \(\vect{V}\), where
+    \begin{align}
+      \vect{V} = \begin{bmatrix} 4 \\ 2 \\ 9\end{bmatrix} \AND
+      \vect{\Delta} = \begin{bmatrix} 1 \\ 0 \\ -7\end{bmatrix} \,.
+    \end{align}
+    In inhomogeneous coordinates the final point is \(\vect{U} = \vect{V} + \vect{\Delta}\). The homogeneous coordinates are defined
+    \begin{align}
+        \vect{Q}_V = \HOM (\vect{V}) = \begin{bmatrix} 4 \\ 2 \\ 9 \\ 1\end{bmatrix} \AND
+        \vect{\xi}_\Delta = \HOM (\vect{\Delta}) = \begin{bmatrix} 1 \\ 0 \\ -7 \\ 0\end{bmatrix} \,.
+    \end{align}
+    Using homogeneous coordinates the final point is
+    \begin{align}
+    \vect{Q}_U = \vect{Q}_V + \vect{\xi}_\Delta
+               = \begin{bmatrix} 4 \\ 2 \\ 9 \\ 1\end{bmatrix} + \begin{bmatrix} 1 \\ 0 \\ -7 \\ 0\end{bmatrix}
+               = \begin{bmatrix} 5 \\ 2 \\ 2 \\ 1\end{bmatrix} = \begin{bmatrix} \vect{U} \\ 1\end{bmatrix}\,.
+    \end{align}
+
+    With the distinction between points and displacements it does not matter whether we work in homogeneous or inhomogeneous representation. The resulting point is always a simple addition.
+\end{example}
+
+\subsection{Rigid transformations}
+
+\begin{figure}
+  \centering
+  \hfill
+  \includestandalone[mode=buildnew,height=3cm]{homocoords-rigidtransform-tripod}
+  \hfill
+  \includestandalone[mode=buildnew,height=3cm]{homocoords-rigidtransform-robot}
+  \hfill
+  \caption{Schematic illustrations of two example transformations from world to camera (\(\mathcal{W}\rightarrow\mathcal{C}\)); the cases are a simple tripod (left) and a more complicated robotic arm (right).%
+  \label{fig:homocoords-rigidtransform}}%
+\end{figure}
+
+One of the main attractions of a homogeneous representation is the expression of rigid world transformations---rotations and translations of points in space. This could be, for example, the transformation from world space to camera space, or a more involved example of transformations between each arm of a robotic set up. Both are illustrated in \cref{fig:homocoords-rigidtransform}. The traditional way to change the basis of coordinate system from, say, a point \(\vect{v}_{\mathcal{W}}\) in world space to an equivalent point \(\vect{v}_{\mathcal{C}}\) is
+\begin{align}
+    \vect{v}_{\mathcal{C}} = \matr{R} \vect{v}_{\mathcal{W}} + \vect{t} \,, \label{eq:inhomo-rigidT-1step}
+\end{align}
+where \(\matr{R}\) is the rotation matrix and \(\vect{t}\) is the translation vector. This corresponds to the simple single rotation and translation of, for example, a tripod such as illustrated in \cref{fig:homocoords-rigidtransform} (left). If, on the other hand, we consider the a more complicated case such as, for example, the robotic arm illustrated in \cref{fig:homocoords-rigidtransform} (right) the change of basis becomes a little more involved:
+\begin{align}
+    \vect{v}_{\mathcal{C}} = \matr{R}_4 \left[\matr{R}_3 \left(\matr{R}_2 \left[\matr{R}_1 \vect{v}_{\mathcal{W}} + \vect{t}_1\right] + \vect{t}_2\right) + \vect{t}_3\right] + \vect{t}_4 \,. \label{eq:inhomo-rigidT-mstep-long}
+\end{align}
+Alternatively, we can formulate a total rotation \(\matr{\Phi}\) and translation \(\vect{\tau}\) where
+\begin{align}
+    \vect{v}_{\mathcal{C}} &= \matr{\Phi} \vect{v}_{\mathcal{W}} + \vect{\tau} \,, \\
+    \matr{\Phi} &= \matr{R}_4 \matr{R}_3 \matr{R}_2 \matr{R}_1 \AND \\
+    \vect{\tau} &= \matr{R}_4 \left[\matr{R}_3 \left(\matr{R}_2 \vect{t}_1 + \vect{t}_2\right) + \vect{t}_3\right] + \vect{t}_4\,. \label{eq:inhomo-rigidT-mstep}
+\end{align}
+
+However, if we examine \cref{eq:inhomo-rigidT-1step} we may vectorize the expression like
+\begin{align}
+    \vect{v}_{\mathcal{C}} &= \begin{bmatrix} \matr{R} & \vect{t} \end{bmatrix} * \begin{bmatrix} \vect{v}_{\mathcal{W}} \\ 1 \end{bmatrix} \,, \\
+    \vect{q}_{\mathcal{C}} &= \begin{bmatrix} \vect{v}_{\mathcal{C}} \\ 1 \end{bmatrix} = \begin{bmatrix} \matr{R} & \vect{t} \\ \matr{0} & 1 \end{bmatrix} * \begin{bmatrix} \vect{v}_{\mathcal{W}} \\ 1 \end{bmatrix} = \matr{T} \vect{q}_{\mathcal{W}} \,,
+\end{align}
+where \(\vect{q}_{\mathcal{W}}\) and \(\vect{q}_{\mathcal{C}}\) are the homogeneous representations of \(\vect{v}_{\mathcal{W}}\) and \(\vect{v}_{\mathcal{C}}\). The homogeneous transformation matrix \(\matr{T}\) now does both rotation and translation in one step. Notice that the \(\matr{0} = \begin{bmatrix} 0 & 0 & 0 \end{bmatrix}\) inside \(\matr{T}\) to match the other matrix blocks. This representation makes particularly the book-keeping of multi-step transformations much simpler, such as
+\begin{align}
+    \vect{q}_{\mathcal{C}} &= \matr{T}_4 \matr{T}_3 \matr{T}_2 \matr{T}_1 \vect{q}_{\mathcal{W}} \,, \label{eq:hom-rigidT-mstep}
+\end{align}
+in the case of \cref{eq:inhomo-rigidT-mstep}.\remark{Using the homogeneous transformations is very often faster on modern computers. Both \cref{eq:inhomo-rigidT-mstep,eq:hom-rigidT-mstep} allow for precomputation of the total transformations. However, a pure matrix-vector product is an operation that has been heavily optimized for. In other words, the homogeneous equation costs fewer CPU cycles.}
+
+
+\subsection{Perspective transformations}
+
+Perspective transformations are nicely expressed in homogeneous coordinates. The inhomogeneous expression for the 2D projection \(\vect{v}\) of a 3D point \(\vect{V}\) is
+\begin{align}
+\vect{v} = \begin{bmatrix}x \\ y\end{bmatrix} = \begin{bmatrix}X / Z \\ Y / Z\end{bmatrix} \,, \WHERE
+\vect{V} = \begin{bmatrix}X \\ Y \\ Z\end{bmatrix} \,.
+\end{align}
+However, this appears awfully similar to an \(\INHOM\) transform of the homogeneous point \(\vect{q} = \vect{V}\). In other words, while projecting 3D points into a 2D plane, the depth acts as a homogeneous scaling. In general, the homogeneous projection equation can be stated as
+\begin{align}
+  \vect{q} = \matr{P} * \vect{Q} \,,
+\end{align}
+where \(\vect{Q}\) is a 3D point in homogeneous coordinates, \(\matr{P}\) is a \(3\times4\) projection matrix, and \(\vect{q}\) is the 2D point projection of \(\vect{Q}\). Notice that because homogeneous coordinates can be scaled arbitrarily, \(\matr{P}\) only has 11 degrees of freedom.
+
+\begin{exercises}[\subsection{Exercises and solutions}]
+\input{homogeneous-coordinates-exc}
+\end{exercises}
+
+%\cleardoublepage\printbibliography\
+
+\end{document}

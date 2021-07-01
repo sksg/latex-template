@@ -1,0 +1,54 @@
+\documentclass{coursenotes-sta}
+\begin{document}
+\begin{tikzpicture}[rotate around y=90]
+
+\def\camh{3}
+\def\camw{3}
+\def\camf{3}
+\def\camdx{(\camw/2)}
+\def\camdy{(\camh/2)}
+
+\tikzset{canvas is image plane/.style={canvas is xy plane at z=\camf, shift={({-(\camdx)},{-(\camdy)})}}}
+
+\draw[|-|] (0, 1.5, 0) -- (0, 1.5, 3) node[pos=0.5, below] {\(f\)};
+\draw[|-|] (0, 1.8, 0) -- (0, 1.8, 5) node[pos=0.5, above] {\(P_z\)};
+
+\draw[->, blue] (0,0,0) -- (-1, 0, 0); % camera coordinate system
+\draw[->, blue] (0,0,0) -- (0, 1.4, 0) node[pos=0.3, left] {\(\mathcal{C}\)};
+
+\path[canvas is image plane]  % define image plane coords
+    (    0,    0) coordinate[name=image south west] --%
+    (\camw,    0) coordinate[name=image south east] --%
+    (\camw,\camh) coordinate[name=image north east] --%
+    (    0,\camh) coordinate[name=image north west] --%
+    ({0.5*\camw},{0.5*\camh}) coordinate[name=image center];
+
+\draw[thin, lightgray]  % perspective funnel behind image plane
+    (0,0,0) -- (image north west)
+    (0,0,0) -- (image north east)
+    (0,0,0) -- (image south west)
+    (0,0,0) -- (image south east);
+\draw[blue] (0,0,0) -- (image center);  % center line axis behind image plane
+\draw[thick] (0,0,0) -- (2*3/5,1*3/5,3);  % perspective line behind image plane
+
+
+\draw[canvas is image plane, gray, fill=lightgreen, fill opacity=0.2]  % draw image plane + sensor grid
+    (image south east) rectangle (image north west);
+\draw[gray, canvas is image plane, opacity=0.5]
+    (image south east) grid (image north west);
+\draw[thin,dashed] (2*3/5,1*3/5,3) -- (2*3/5,0,3) -- (0,0,3) -- (0, 1.5, 3);
+\draw[->, blue] (0,0,3) -- (-0.5, 0, 3); % camera coordinate system
+\draw[->, blue] (0,0,3) -- (0, 0.5, 3) node[pos=0.4, left] {\(\mathcal{S}\)};
+
+
+\draw[->, blue] (image center) -- + (0, 0, 2.5) node[right] {\(z\)};  % center line axis in front of image plane
+\draw[thick] (2*3/5,1*3/5,3) -- (2,1,5);  % perspective line in front of image plane
+
+\draw[thin,dashed] (2,1,5) -- (2,0,5) -- (0,0,5) -- (0, 1.8, 5);
+
+\path  % 3D and 2D points
+    (2*3/5,1*3/5,3) node[point, above left] {$\symbf{p}$}
+    (2,1,5) node[point, above right] {$\symbf{P}$};
+
+\end{tikzpicture}
+\end{document}

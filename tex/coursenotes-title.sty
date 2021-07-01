@@ -1,0 +1,124 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-title}%
+    [2021/01/13 Course notes title package]
+
+\RequirePackage{xparse,hyperref}
+
+\def\thedate{\today}
+\let\@author\@empty
+\let\@affil\@empty
+\let\@mailto\@empty
+\let\@titleinfo\@empty
+\def\@authormailtoaffil{%
+    \ifx\@author\@empty%
+        \ifx\@mailto\@empty
+            \ifx\@affil\@empty\else\@affil\par\fi%
+        \else
+            \@mailto%
+            \ifx\@affil\@empty\else, \@affil\fi
+        \fi%
+    \else%
+        \@author%
+        \ifx\@mailto\@empty\else\ (\@mailto)\fi%
+        \ifx\@affil\@empty\else, \@affil\fi%
+    \fi%
+}
+
+\def\affiliation#1{\gdef\@affil{#1}}
+\def\titleinfo#1{\gdef\@titleinfo{#1}}
+\def\mailto#1{%
+    \gdef\@mailto{%
+        \texorpdfstring{\href{mailto:#1}{#1}}{#1}%
+    }%
+}
+
+%TODO remove hyperref requirement!
+
+
+\RenewDocumentCommand{\maketitle}{}{%
+  \begingroup%
+    \vspace*{5\baselineskip}%
+    \setlength{\parindent}{0pt}%
+    \setlength{\parskip}{4pt}%
+    % Maketitle stuff
+    \gdef\@@title{\@title}%
+    \gdef\@@author{\@authormailtoaffil}%
+    \gdef\@@date{\@date}%
+    \normalfont\huge\@title\par%
+    \vspace{0.25\baselineskip}%
+    \large\@authormailtoaffil\par%
+    \@date%
+    \vfill%
+  
+      \let\oldcontentsname\contentsname
+      \renewcommand\contentsname{\oldcontentsname\par\hrule\vspace*{-1\baselineskip}}
+      {\hypersetup{hidelinks}\tableofcontents}%
+      %\vspace*{1\baselineskip}\hrule%
+  
+  \endgroup%
+  \thispagestyle{empty}
+  \clearpage
+}
+
+\RequirePackage{titlesec,titletoc}
+\setcounter{secnumdepth}{2}
+
+
+\titleformat{\chapter}
+    [display]{\normalfont\huge}
+    {\thechapter}{10pt}{}[]
+
+\titleformat{\section}
+    [hang]{\normalfont\Large}
+    {\thesection}{10pt}{}[]
+
+\titleformat{\subsection}%
+    [hang]{\normalfont\large}
+    {\thesubsection}{10pt}{}[]
+
+\titleformat{\paragraph}
+    [runin]{\normalfont\itshape}
+    {\theparagraph}{1em}{}[]
+
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+\titlespacing*{\section}{0pt}{4.3ex}{2.5ex}
+\titlespacing*{\subsection}{0pt}{4.05ex}{1.7ex}
+
+\titlecontents{chapter}%
+    [1.5\baselineskip]{\normalfont\itshape\LARGE}
+    {\contentslabel{2em}}{}
+    {\quad\thecontentspage}[]
+
+\titlecontents{section}
+    [0em]{\normalfont\itshape\Large}
+    {\hspace*{2em}\contentslabel{2em}}
+    {\hspace*{2em}}
+    {\quad\thecontentspage}[]
+
+\titlecontents{subsection}
+    [0em]{\normalfont\itshape\large}
+    {\hspace*{4em}\contentslabel{4em}}
+    {\hspace*{4em}}
+    {\quad\thecontentspage}[]
+
+% Subsubsection headings shouldn't be used.
+% See Bringhurst's _The Elements of Typography_, section 4.2.2.
+\RenewDocumentCommand\subsubsection{}{%
+    \ClassError{coursenotes}{%
+        \string\subsubsection is undefined by this class.
+    }{%
+        You should not have too many levels of headings.
+        See Bringhurst's _The Elements of Typographic Style_.
+        Also see http://www.edwardtufte.com/.
+    }
+}
+
+\RenewDocumentCommand\subparagraph{}{%
+    \ClassError{coursenotes}{%
+        \string\subsubsection is undefined by this class.
+    }{%
+        You should not have too many levels of headings.
+        See Bringhurst's _The Elements of Typographic Style_.
+        Also see http://www.edwardtufte.com/.
+    }
+}

@@ -1,0 +1,23 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-standalone}%
+    [2021/01/13 Course notes standalone package]
+    
+\RequirePackage{luacode}
+\begin{luacode*}
+  function PrintOutputArgs()
+    if arg then
+      texio.write_nl("The following options were passed:")
+      for _, v in pairs(arg) do
+        if v:sub(1, 1) == "-" then
+          arg = " " .. v
+          texio.write_nl(arg)
+          tex.print(arg)
+        end
+      end
+    else
+      texio.write_nl("No options were passed!")
+    end
+  end
+\end{luacode*}
+
+\RequirePackage[build={latexoptions={\directlua{PrintOutputArgs()}}}]{standalone}

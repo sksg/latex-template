@@ -1,0 +1,197 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-exp-exc-sol}%
+    [2021/01/13 Course notes collect package]
+
+\RequirePackage{coursenotes-framebox}
+\RequirePackage{coursenotes-collect}
+\RequirePackage{xhfill}
+
+
+
+\NewFramebox{example}{Example}
+\NewFramebox{exercise}[impl]{Exercise}
+\NewFramebox{solution}[impl]{Solution}
+
+\NewCollection{exercises}
+\NewCollection{solutions}
+
+\newif\if@link@exercise@solution@
+\NewDocumentCommand{\LinkExerciseAndSolution}{m}{%
+    \csname @link@exercise@solution@#1\endcsname%
+}
+\NewDocumentCommand{\IfLinkExerciseAndSolutionT}{m}{%
+    \if@link@exercise@solution@ #1\fi%
+}
+\NewDocumentCommand{\ExerciseLink}{}{%
+    \IfLinkExerciseAndSolutionT{%
+        \footnote{%
+            \@ifundefined{r@:solution:\theexercise}{%
+                There is no solution~\theexercise.%
+            }{%
+                Solution \ref{:solution:\theexercise} on page \pageref{:solution:\theexercise}.%
+            }%
+        }%
+    }%
+}
+\NewDocumentCommand{\SolutionLink}{}{%
+    \IfLinkExerciseAndSolutionT{%
+        \footnote{%
+            \@ifundefined{r@:exercise:\thesolution}{%
+                \color{red} There is no exercise~\thesolution.%
+            }{%
+                Exercise \ref{:exercise:\thesolution} on page \pageref{:exercise:\thesolution}.%
+            }%
+        }%
+    }%
+}
+\LinkExerciseAndSolution{false}
+
+\def\PushSolution{}%
+\NewDocumentCommand{\PullSolution}{o+m}{%
+    \global\let\CN@realsolution\solution%
+    \global\let\CN@endsolutionfake\relax%
+    \long\def\solution##1\CN@endsolutionfake{%
+        \gdef\PushSolution{%
+            \let\solution\CN@realsolution%
+            \global\let\CN@realsolution\relax%
+            \begin{solution}[#1]##1\end{solution}%
+            \gdef\PushSolution{}%
+        }%
+    }%
+    #2\CN@endsolutionfake
+}
+\NewDocumentEnvironment{exercise}{o+b}{%
+    \setcounter{solution}{\value{exercise}}%
+    \IfPrintImmediateTF{exercises}{%
+        \begin{exerciseimpl}[#1]%
+        \PullSolution[#1]{#2}%
+        \ExerciseLink%
+        \end{exerciseimpl}%
+        \PushSolution%
+    }{%
+        \StepFrameboxCounter{exercise}[#1]
+    }%
+    \AddToCollection{exercises}{%
+        \noexpand\begin{exercise}%
+        [\IfValueTF{#1}{#1}{\theexercise}]%
+        \unexpanded{#2}%
+        \noexpand\end{exercise}%
+    }%
+}{}
+
+\NewDocumentEnvironment{solution}{o+b}{%
+    \IfPrintImmediateTF{solutions}{%
+        \begin{solutionimpl}[#1]%
+        #2%
+        \SolutionLink%
+        \end{solutionimpl}%
+    }{%
+        \StepFrameboxCounter{solution}[#1]
+    }%
+    \AddToCollection{solutions}{%
+        \noexpand\begin{solution}%
+        [\IfValueTF{#1}{#1}{\thesolution}]%
+        \unexpanded{#2}%
+        \noexpand\end{solution}%
+    }%
+}{}
+
+\AtBeginDocument{%
+    \@ifpackageloaded{cleveref}{%
+        \crefname{example}{example}{examples}%
+        \Crefname{example}{Examples}{Examples}%
+        \crefname{exercise}{exercise}{exercises}%
+        \Crefname{exercise}{Exercise}{Exercises}%
+        \crefname{solution}{solution}{solutions}%
+        \Crefname{solution}{Solution}{Solutions}%
+        \crefname{example@hidden}{example}{examples}%
+        \Crefname{example@hidden}{Examples}{Examples}%
+        \crefname{exercise@hidden}{exercise}{exercises}%
+        \Crefname{exercise@hidden}{Exercise}{Exercises}%
+        \crefname{solution@hidden}{solution}{solutions}%
+        \Crefname{solution@hidden}{Solution}{Solutions}%
+    }{}%
+}
+
+\newlength{\inlineframevspacebeforetitle}
+\setlength{\inlineframevspacebeforetitle}{3ex}
+\def\inlinedframeboxtitlefont{\normalfont}
+\NewDocumentEnvironment{inline-exercises-solutions}{}{%
+    \NewDocumentCommand{\RenewFramebox}{mO{}m}{%
+        \RenewDocumentEnvironment{##1##2}{o+b}{%
+            \def\thecnt{\csname the##1\endcsname}%
+            \def\theicon{\csname ##1icon\endcsname}%
+            \par\addvspace{\inlineframevspacebeforetitle}\noindent%
+            \RefStepFrameboxCounter{##1}[####1]%
+            {%
+                \label{:##1:\thecnt}%
+                \inlinedframeboxtitlefont%
+                \raisebox{2pt}{\rule{5mm}{\frameboxborder}}%
+                ~~\theicon~~##3~\thecnt~~\xrfill[2pt]{\frameboxborder}%
+            }%
+            \par\nopagebreak\noindent%
+            ####2\par%
+        }{}%
+    }%
+    \RenewFramebox{exercise}[impl]{Exercise}%
+    \RenewFramebox{solution}[impl]{Solution}%
+}{}
+
+%% The icons for frameboxes
+
+\NewDocumentCommand{\exampleicon}{}{%
+    \tikz[baseline=-1.5pt,
+          line width=0.6pt,
+          line cap=round,
+          rounded corners=0.1mm]{
+        \def\len{0.7mm}
+        \draw (0.5*\len, 0) -- ++ (0, 0.25*\len)
+          to[out=90,in=-90] ++ (0.5*\len, 1.5*\len)
+          to[out=90,in=0] ++ (-\len, \len)
+          to[out=180,in=90] ++ (-\len, -\len)
+          to[out=-90,in=90] ++ (0.5*\len, -1.5*\len)
+          -- ++ (0, -0.25*\len) -- cycle;
+        \draw (-0.45*\len, -0.38*\len) -- ++ (0.9*\len, 0);
+        \draw (-0.4*\len, -0.76*\len) -- ++ (0.8*\len, 0);
+    }%
+}
+
+\NewDocumentCommand{\exerciseicon}{}{%
+    \tikz[baseline=-7.5pt,
+          rotate=225,
+          rounded corners=0.1mm,
+          draw=none]{
+        \def\len{4mm}
+        \fill (0,0) -- ++(0.65*\len, 0)
+            to[in=-40,out=40] ++ (0, 0.2*\len)
+            -- ++(-0.65*\len, 0) -- cycle;
+        \fill (0.7*\len, 0)
+            to[in=-40,out=40] ++(0, 0.2*\len)
+            -- ++(0.2*\len, -0.1*\len) -- cycle;
+    }%
+}
+
+\NewDocumentCommand{\solutionicon}{}{%
+    \tikz[baseline=0]{\def\len{4mm}
+        \fill (0, .35*\len) -- (.25*\len, 0)
+            -- (\len, .7*\len) -- (.25*\len, .15*\len)
+            -- cycle;
+    }%
+}
+
+\NewDocumentEnvironment{scorecard}{oo}{
+  \vspace{0.5\baselineskip}%
+  \par\noindent%
+  {\frameboxtitlefont\IfValueTF{#1}{#1}{Score card:}}\IfValueT{#2}{~#2}%
+   \begin{itemize}\renewcommand{\labelitemi}{}\itemsep0em\itshape%
+}{%
+  \end{itemize}%
+  \vspace{-\baselineskip}%
+}
+
+\NewDocumentEnvironment{exercises}{o}{%
+    \IfValueT{#1}{#1}%
+    \begin{inline-exercises-solutions}%
+}{%
+    \end{inline-exercises-solutions}%
+}

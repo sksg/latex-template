@@ -1,0 +1,124 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-oneandhalfcolumn}[2021/01/13 Course notes 1.5-column package]
+
+\RequirePackage{geometry,sidenotes,marginfix,multicol}
+
+\geometry{
+  a4paper,
+  left=24.8mm,
+  top=27.4mm,
+  headsep=2\baselineskip,
+  textwidth=107mm,
+  marginparsep=8.2mm,
+  marginparwidth=49.4mm,
+  textheight=49\baselineskip,
+  headheight=\baselineskip
+}
+
+\NewDocumentEnvironment{fullwidth}{}{%
+    \adjustwidth{}{-\@sidenotes@extrawidth}%
+}{%
+    \endadjustwidth%
+}
+
+\let\cn@oneandhalfcolumn@maketitle\maketitle
+\renewcommand\maketitle{%
+    \begin{fullwidth}%
+    \cn@oneandhalfcolumn@maketitle%
+    \end{fullwidth}%
+}
+
+\AtBeginDocument{%
+    \let\footnote=\sidenote
+    \let\thefootnote=\thesidenote
+    \let\footnotemark=\sidenotemark
+    \let\footnotetext=\sidenotetext
+    \let\cite=\autocite
+    
+    \let\@cn@oldfootcitetext\footcitetext
+    \RenewDocumentCommand\footcitetext{oO{}O{}m}{%
+        \addtocounter{sidenote}{-1}%
+        \refstepcounter{sidenote}%
+        \let\@cn@oldthesidenote\thesidenote%
+        \IfValueTF{#1}{\def\thesidenote{#1}}{}%
+        \@cn@oldfootcitetext[#2][#3]{#4}%
+        \let\thesidenote\@cn@oldthesidenote%
+    }
+}
+
+\setcounter{sidenote}{0}% Fix to sidenotes package
+\RenewDocumentCommand\sidenotemark{o}{%
+    \@sidenotes@multichecker
+    \IfValueTF{#1}{%
+        \@sidenotes@thesidenotemark{#1}%
+    }{%
+        \refstepcounter{sidenote}% Fix to sidenotes package
+        \@sidenotes@thesidenotemark{\thesidenote}%
+    }%
+    \@sidenotes@multimarker
+}
+
+\def\@marginfont{\normalfont\footnotesize}
+\def\@superscriptfont{\normalfont\normalsize}
+\RenewDocumentCommand\sidenotetext{oo+m}{%
+    \let\CN@oldincludegraphics\includegraphics%
+    \RenewDocumentCommand\includegraphics{om}{%
+        \begin{center}\CN@oldincludegraphics[##1]{##2}\end{center}%
+        \CN@after@graphics%
+        \global\let\CN@after@graphics\relax%
+        \ignorespaces%
+    }%
+    \gdef\CN@after@graphics{}%
+    \def\themark{\IfValueTF{#1}{#1}{\thesidenote}}%
+    \def\CN@start@sidenote{%
+        {%
+            \@superscriptfont%
+            \textsuperscript{\themark}{}~%
+        }%
+        \ignorespaces%
+    }%
+    \@sidenotes@placemarginal{#2}{%
+        \capturefootnotes% Fix to sidenotes
+        \@marginfont\ignorespaces%
+        \@ifnextchar\includegraphics{%
+            \global\let\CN@after@graphics\CN@start@sidenote%
+        }{%
+            \@ifnextchar\includestandalone{%
+                \global\let\CN@after@graphics\CN@start@sidenote%
+            }{%
+                \CN@start@sidenote\ignorespaces%
+            }%
+        }%
+        #3%
+    }%
+    \let\includegraphics\CN@oldincludegraphics%
+    \releasefootnotes% Fix to sidenotes
+}%
+
+\RenewDocumentEnvironment{exercises}{o}{%
+    \setlength{\columnsep}{\exercisestwocolumnsep}%
+    \begin{fullwidth}%
+    \begin{multicols}{2}[%
+        \IfValueT{#1}{#1}%
+    ]%
+    \begin{inline-exercises-solutions}%
+}{%
+    \end{inline-exercises-solutions}%
+    \end{multicols}%
+    \end{fullwidth}%
+}
+
+\setlength{\frameboxmargin}{3mm}
+\def\inlinedframeboxtitlefont{\normalfont}
+\newlength{\exercisestwocolumnsep}%
+\setlength{\exercisestwocolumnsep}{10mm}%
+
+\RequirePackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Page \thepage}
+\lhead{\@title}
+
+\addtolength{\headwidth}{\marginparsep}
+\addtolength{\headwidth}{\marginparwidth}

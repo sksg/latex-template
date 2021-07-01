@@ -1,0 +1,19 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-font}%
+    [2021/01/13 Course notes font package]
+
+\RequirePackage{fontspec}
+\RequirePackage[math-style=ISO,%
+                bold-style=ISO]{unicode-math}
+
+\setmathfont{STIX2Math}[
+    Extension={.otf},
+    Scale=1
+]
+\setmainfont{STIX2Text}[
+    Extension={.otf},
+    UprightFont={*-Regular},
+    BoldFont={*-Bold},
+    ItalicFont={*-Italic},
+    BoldItalicFont={*-BoldItalic}
+]

@@ -1,0 +1,17 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{coursenotes-graphics}%
+    [2021/01/13 Course notes graphics package]
+    
+
+\RequirePackage{graphicx,tikz}
+\usetikzlibrary{arrows,arrows.meta,bending,3d,calc,positioning,decorations.pathmorphing}
+\tikzset{>={Latex},
+         invclip/.style={clip,insert path={{%
+            (current page.south east) rectangle (current page.north west)}}},
+         point/.style={insert path={ node[scale=#1]{.} }},
+         point/.default=3,
+         pencildraw/.style={
+           decorate,
+           decoration={random steps,segment length=1.2pt,amplitude=0.2pt}
+         }
+      }
